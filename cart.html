@@ -42,22 +42,31 @@ button{
 <div class="container">
 <h1>Your Cart</h1>
 
-<!-- ✅ Dynamic cart items -->
 <div id="cartItems"></div>
 
 <h3 id="total">Total: R0</h3>
 
 <button onclick="checkout()">Checkout</button>
+
+<p id="message"></p>
 </div>
+
+<!-- ✅ SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <script>
 
-// ✅ LOAD CART FROM LOCAL STORAGE
+// ✅ CONFIG
+const SUPABASE_URL = "https://qhzyesapzldfufygaopz.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ✅ CART HANDLING
 function getCart() {
     return JSON.parse(localStorage.getItem("cart")) || [];
 }
 
-// ✅ SAVE CART
 function saveCart(cart) {
     localStorage.setItem("cart", JSON.stringify(cart));
 }
@@ -102,8 +111,9 @@ function removeItem(index) {
     loadCart();
 }
 
-// ✅ CHECKOUT (for now just alert)
-function checkout() {
+// ✅ CHECKOUT FUNCTION (REAL IMPLEMENTATION)
+async function checkout() {
+
     const cart = getCart();
 
     if (cart.length === 0) {
@@ -111,10 +121,63 @@ function checkout() {
         return;
     }
 
-    alert("Proceeding to checkout... (next step we connect to DB)");
+    // ✅ GET CURRENT USER
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    if (!user) {
+        alert("You must login first ❌");
+        return;
+    }
+
+    const total = cart.reduce((sum, item) => sum + Number(item.price), 0);
+
+    // ✅ CREATE ORDER
+    const { data: orderData, error: orderError } = await supabaseClient
+        .from('orders')
+        .insert([{
+            user_id: user.id,
+            total: total,
+            status: "pending"
+        }])
+        .select()
+        .single();
+
+    if (orderError) {
+        console.error(orderError);
+        document.getElementById("message").innerText = "Order failed ❌";
+        return;
+    }
+
+    const orderId = orderData.id;
+
+    // ✅ INSERT ORDER ITEMS
+    const itemsToInsert = cart.map(item => ({
+        order_id: orderId,
+        product_id: item.id,
+        name: item.name,
+        price: item.price
+    }));
+
+    const { error: itemsError } = await supabaseClient
+        .from('order_items')
+        .insert(itemsToInsert);
+
+    if (itemsError) {
+        console.error(itemsError);
+        document.getElementById("message").innerText = "Items save failed ❌";
+        return;
+    }
+
+    // ✅ CLEAR CART
+    localStorage.removeItem("cart");
+
+    // ✅ SUCCESS
+    document.getElementById("message").innerText = "Order placed ✅";
+
+    loadCart();
 }
 
-// ✅ INITIAL LOAD
+// ✅ INIT
 loadCart();
 
 </script>
