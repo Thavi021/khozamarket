@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Product Management</title>
+
+<style>
+body{background:#0f172a;color:white;font-family:'Segoe UI';padding:40px;}
+h1{color:#facc15;}
+
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px;border-bottom:1px solid #333;}
+th{color:#facc15;}
+
+button{
+    padding:6px 10px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.approve{background:#22c55e;color:white;}
+.remove{background:#ef4444;color:white;}
+</style>
+
+</head>
+<body>
+
+<h1>Product Management</h1>
+
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Product</th>
+<th>Seller</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody id="productTable"></tbody>
+</table>
+
+<br>
+<a href="admin.html"><button>Back</button></a>
+
+<!-- ✅ SUPABASE -->
+https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js
+
+<script>
+
+// ✅ CONFIG
+const SUPABASE_URL = "https://qhzyesapzldfufygaopz.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ✅ LOAD PRODUCTS
+async function loadProducts() {
+
+    const { data, error } = await supabaseClient
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    const table = document.getElementById("productTable");
+    table.innerHTML = "";
+
+    data.forEach(product => {
+
+        const row = document.createElement("tr");
+
+        let actions = "";
+
+        // ✅ If pending → show approve
+        if (product.status === "pending") {
+            actions += `<button class="approve" onclick="approveProduct(${product.id})">Approve</button>`;
+        }
+
+        // ✅ Always show delete
+        actions += `<button class="remove" onclick="deleteProduct(${product.id})">Remove</button>`;
+
+        row.innerHTML = `
+            <td>${product.id}</td>
+            <td>${product.name}</td>
+            <td>${product.seller_name || "Unknown"}</td>
+            <td>${product.status}</td>
+            <td>${actions}</td>
+        `;
+
+        table.appendChild(row);
+    });
+}
+
+// ✅ APPROVE PRODUCT
+async function approveProduct(id) {
+
+    const { error } = await supabaseClient
+        .from('products')
+        .update({ status: "approved" })
+        .eq('id', id);
+
+    if (error) {
+        console.error(error);
+        alert("Error approving product");
+        return;
+    }
+
+    loadProducts();
+}
+
+// ✅ DELETE PRODUCT
+async function deleteProduct(id) {
+
+    if (!confirm("Delete this product?")) return;
+
+    const { error } = await supabaseClient
+        .from('products')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error(error);
+        alert("Error deleting product");
+        return;
+    }
+
+    loadProducts();
+}
+
+// ✅ INIT
+loadProducts();
+
+</script>
+
+</body>
+</html>
