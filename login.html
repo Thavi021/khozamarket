@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login</title>
+
+<style>
+body{background:#0f172a;color:white;font-family:'Segoe UI';}
+.container{padding:40px;}
+input{display:block;margin:10px 0;padding:10px;width:100%;}
+button{background:#facc15;padding:10px;border:none;cursor:pointer;}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+<h1>Login</h1>
+
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+<p><a href="register.html">Register</a></p>
+
+<br>
+
+<a href="admin.html">
+    <button style="background:#1e293b; color:#facc15; border:1px solid #facc15;">
+        Admin Access
+    </button>
+</a>
+
+<p id="message"></p>
+</div>
+
+<!-- ✅ SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script>
+
+// ✅ CONFIG
+const SUPABASE_URL = "https://qhzyesapzldfufygaopz.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ✅ LOGIN FUNCTION
+async function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if (error) {
+        document.getElementById("message").innerText = error.message;
+        return;
+    }
+
+    document.getElementById("message").innerText = "Logged in ✅";
+
+    console.log(data);
+
+    // ✅ redirect after login
+    window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
