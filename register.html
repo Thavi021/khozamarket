@@ -1,39 +1,131 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Login</title>
+<title>Register</title>
 
 <style>
-body{background:#0f172a;color:white;font-family:'Segoe UI';}
-.container{padding:40px;}
-input{display:block;margin:10px 0;padding:10px;width:100%;}
-button{background:#facc15;padding:10px;border:none;}
+body{
+    background:#0f172a;
+    color:white;
+    font-family:'Segoe UI';
+}
+
+.container{
+    padding:40px;
+    max-width:400px;
+    margin:auto;
+}
+
+input{
+    display:block;
+    margin:10px 0;
+    padding:10px;
+    width:100%;
+    border:none;
+    border-radius:6px;
+}
+
+button{
+    background:#facc15;
+    padding:10px;
+    border:none;
+    width:100%;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.message{
+    margin-top:15px;
+    font-size:14px;
+}
 </style>
 
 </head>
 <body>
 
 <div class="container">
-<h1>Login</h1>
+<h1>Create Account</h1>
 
-<input placeholder="Username">
-<input type="password" placeholder="Password">
+<input id="name" placeholder="Full Name">
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
 
-<button>Login</button>
+<button onclick="register()">Register</button>
 
-<p><a href="register.html">Register</a></p>
+<p class="message" id="message"></p>
 
-  <button>Login</button>
-
-<br><br>
-
-<a href="admin.html">
-    <button style="background:#1e293b; color:#facc15; border:1px solid #facc15;">
-        Admin Access
-    </button>
-</a>
+<p style="margin-top:20px;">
+Already have an account? 
+<a href="login.html" style="color:#facc15;">Login</a>
+</p>
 
 </div>
+
+<!-- ✅ SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script>
+
+// ✅ CONFIG
+const SUPABASE_URL = "https://qhzyesapzldfufygaopz.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ✅ REGISTER FUNCTION
+async function register() {
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    // ✅ Basic validation
+    if (!name || !email || !password) {
+        setMessage("Please fill all fields ❌", "red");
+        return;
+    }
+
+    setMessage("Creating account...", "#94a3b8");
+
+    // ✅ SIGN UP
+    const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+            data: { full_name: name }
+        }
+    });
+
+    if (error) {
+        setMessage(error.message, "red");
+        return;
+    }
+
+    // ✅ OPTIONAL: Insert into profiles table
+    if (data.user) {
+        await supabaseClient.from('profiles').insert([{
+            id: data.user.id,
+            full_name: name
+        }]);
+    }
+
+    setMessage("Registered successfully ✅ Please login.", "#22c55e");
+
+    // ✅ Redirect after short delay
+    setTimeout(() => {
+        window.location.href = "login.html";
+    }, 1500);
+}
+
+// ✅ HELPER
+function setMessage(text, color) {
+    const msg = document.getElementById("message");
+    msg.innerText = text;
+    msg.style.color = color;
+}
+
+</script>
 
 </body>
 </html>
