@@ -1,188 +1,83 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <title>KhozaMarket</title>
 
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-body {
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    background: #0f172a;
-    color: #f1f5f9;
-}
-
-header {
-    background: #020617;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 40px;
-}
-
-header h2 { color: #facc15; }
-
-nav {
-    display: flex;
-    align-items: center;
-}
-
-nav a {
-    color: #e2e8f0;
-    margin-left: 20px;
-    text-decoration: none;
-}
-
-nav span {
-    margin-left: 20px;
-}
-
-nav a:hover { color: #facc15; }
-
-.hero {
-    padding: 60px 40px;
-    background: linear-gradient(135deg, #1e293b, #020617);
-}
-
-.container { padding: 40px; }
-
-.products {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-}
-
-.card {
-    background: #1e293b;
-    padding: 20px;
-    border-radius: 10px;
-}
-
-.price { color: #facc15; }
-
-button {
-    width: 100%;
-    padding: 10px;
-    background: #facc15;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
+body{background:#0f172a;color:white;font-family:'Segoe UI';margin:0;}
+header{background:#020617;padding:15px 40px;display:flex;justify-content:space-between;}
+nav a{color:white;margin-left:15px;text-decoration:none;}
+.hero{padding:40px;}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;padding:40px;}
+.card{background:#1e293b;padding:15px;border-radius:10px;}
+button{padding:8px;background:#facc15;border:none;}
 </style>
-
 </head>
 
 <body>
 
 <header>
-    <h2>MzanziMarket</h2>
-    <nav id="navBar">
-        <a href="index.html">Home</a>
-        <a href="products.html">Shop</a>
-        <a href="sell.html">Sell</a>
-        <a href="login.html">Login</a>
-    </nav>
+<h2>MzanziMarket</h2>
+<nav id="navBar">
+<a href="index.html">Home</a>
+<a href="products.html">Shop</a>
+<a href="sell.html">Sell</a>
+<a href="login.html">Login</a>
+</nav>
 </header>
 
-<section class="hero">
-    <h1>Buy & Sell Across South Africa</h1>
-    <p>Trusted marketplace for everyday people</p>
-</section>
-
-<div class="container">
-    <h2>Featured Products</h2>
-    <div class="products" id="productsContainer"></div>
+<div class="hero">
+<h1>Buy & Sell Across SA</h1>
 </div>
 
-<!-- ✅ SUPABASE -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<div class="products" id="products"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+const supabase = supabase.createClient(
+"https://lyvtjcnzeihsqvpzkced.supabase.co",
+"YeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM"
+);
 
-// ✅ CONFIG (FIXED)
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
-
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ✅ SHOW USER IN NAVBAR
-async function checkUser() {
-
-    const { data: { user } } = await supabaseClient.auth.getUser();
-
-    const nav = document.getElementById("navBar");
-
-    // ✅ Not logged in
-    if (!user) return;
-
-    // ✅ Get profile
-    const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-    const name = profile?.full_name || "User";
-
-    // ✅ Update navbar
-    nav.innerHTML = `
-/a>
-        <a href="products.html">Shop</a>
-        sell.htmlSell</a>
-        orders.htmlMy Orders</a>
-        <span>👋 ${name}</span>
-        <a href="#" onclick="
-// ✅ LOGOUT
-async function logout() {
-    await supabaseClient.auth.signOut();
-    window.location.reload();
-}
-
-// ✅ LOAD PRODUCTS
-async function loadProducts() {
-
-    const { data, error } = await supabaseClient
-        .from('products')
-        .select('*')
-        .eq('status', 'approved')
-        .limit(6);
-
-    if (error) {
-        console.error(error);
-        return;
-    }
-
-    const container = document.getElementById("productsContainer");
-    container.innerHTML = "";
-
-    if (!data || data.length === 0) {
-        container.innerHTML = "<p>No products available</p>";
-        return;
-    }
-
-    data.forEach(product => {
-
-        const card = document.createElement("div");
-        card.className = "card";
-
-        card.innerHTML = `
-            <h3>${product.name}</h3>
-            <p class="price">R${product.price}</p>
-            <p>Seller: ${product.seller_name}</p>
-            product.html?id=${product.id}
-                <button>View</button>
+async function loadProducts(){
+    const {data}=await supabase.from('products').select('*').eq('status','approved');
+    const container=document.getElementById("products");
+    container.innerHTML="";
+    data.forEach(p=>{
+        container.innerHTML+=`
+        <div class="card">
+            <h3>${p.name}</h3>
+            <p>R${p.price}</p>
+            <a href="product.html?id                <button>View</button>
             </a>
-        `;
-
-        container.appendChild(card);
+        </div>`;
     });
 }
 
-// ✅ INIT
+async function checkUser(){
+    const {data:{user}} = await supabase.auth.getUser();
+    if(!user) return;
+
+    const {data:profile}=await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id',user.id)
+        .single();
+
+    document.getElementById("navBar").innerHTML=`
+    <a href="index.html">Home</a>
+    <a href="products.html">Shop</a>
+    <a href="sell.html">Sell</a>
+    orders.htmlOrders</a>
+    <span>👋 ${profile.full_name}</span>
+    <a href="#" onclick="c function logout(){
+    await supabase.auth.signOut();
+    location.reload();
+}
+
 checkUser();
 loadProducts();
-
 </script>
 
 </body>
