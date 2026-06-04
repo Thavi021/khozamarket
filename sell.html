@@ -5,86 +5,126 @@
 
 <style>
 body{background:#0f172a;color:white;font-family:'Segoe UI';}
-.container{padding:40px;}
+.container{padding:40px;max-width:500px;margin:auto;}
+
 input,textarea{
     width:100%;
     margin:10px 0;
     padding:10px;
+    border-radius:6px;
+    border:none;
 }
+
 button{
     padding:10px;
     background:#facc15;
     border:none;
     cursor:pointer;
+    width:100%;
+    border-radius:6px;
+    font-weight:bold;
+}
+
+.message{
+    margin-top:10px;
 }
 </style>
 
 </head>
+
 <body>
 
 <div class="container">
 <h1>Sell Item</h1>
 
 <input id="name" placeholder="Product Name">
-<input id="price" placeholder="Price">
+<input id="price" placeholder="Price (e.g. 500)">
 <textarea id="description" placeholder="Description"></textarea>
 
-<button onclick="postProduct()">Post</button>
+<button id="postBtn" onclick="postProduct()">Post</button>
 
-<p id="message"></p>
+<p id="message" class="message"></p>
 </div>
 
 <!-- ✅ SUPABASE -->
-https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <script>
 
-// ✅ CONFIG
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co/rest/v1/";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+// ✅ CONFIG (FIXED)
+const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ✅ POST PRODUCT
 async function postProduct() {
 
-    const name = document.getElementById("name").value;
-    const price = document.getElementById("price").value;
-    const description = document.getElementById("description").value;
+    const btn = document.getElementById("postBtn");
+    btn.disabled = true;
 
-    // ✅ GET LOGGED-IN USER
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    const name = document.getElementById("name").value.trim();
+    const price = document.getElementById("price").value.trim();
+    const description = document.getElementById("description").value.trim();
 
-    if (!user) {
-        document.getElementById("message").innerText = "You must login first ❌";
+    if (!name || !price) {
+        setMessage("Fill all fields ❌", "red");
+        btn.disabled = false;
         return;
     }
 
-    // ✅ INSERT INTO DB
-    const { data, error } = await supabaseClient
+    // ✅ GET USER
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    if (!user) {
+        setMessage("You must login first ❌", "red");
+        btn.disabled = false;
+        return;
+    }
+
+    // ✅ GET PROFILE (IMPORTANT FIX)
+    const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+    const sellerName = profile?.full_name || "User";
+
+    // ✅ INSERT PRODUCT
+    const { error } = await supabaseClient
         .from('products')
         .insert([{
             name: name,
             price: price,
             description: description,
             seller_id: user.id,
-            seller_name: user.user_metadata.full_name || "User"
+            seller_name: sellerName,
+            status: "pending"
         }]);
 
     if (error) {
         console.error(error);
-        document.getElementById("message").innerText = error.message;
+        setMessage(error.message, "red");
+        btn.disabled = false;
         return;
     }
 
-    document.getElementById("message").innerText = "Product posted ✅";
-
-    console.log(data);
+    setMessage("Product submitted ✅ Waiting for admin approval", "#22c55e");
 
     // ✅ CLEAR FORM
     document.getElementById("name").value = "";
     document.getElementById("price").value = "";
     document.getElementById("description").value = "";
+
+    btn.disabled = false;
+}
+
+// ✅ HELPER
+function setMessage(msg, color) {
+    const el = document.getElementById("message");
+    el.innerText = msg;
+    el.style.color = color;
 }
 
 </script>
