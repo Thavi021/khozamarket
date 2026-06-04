@@ -5,7 +5,6 @@
 <title>KhozaMarket</title>
 
 <style>
-/* (YOUR CSS → unchanged) */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -25,12 +24,16 @@ header {
 
 header h2 { color: #facc15; }
 
+nav {
+    display: flex;
+    align-items: center;
+}
+
 nav a {
     color: #e2e8f0;
     text-decoration: none;
     margin-left: 20px;
     font-size: 14px;
-    transition: 0.3s;
 }
 
 nav a:hover { color: #facc15; }
@@ -63,7 +66,6 @@ nav a:hover { color: #facc15; }
     border-radius: 15px;
     padding: 20px;
     transition: 0.3s;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
 }
 
 .card:hover {
@@ -71,33 +73,25 @@ nav a:hover { color: #facc15; }
     box-shadow: 0 6px 20px rgba(250,204,21,0.3);
 }
 
-.card h3 { font-size: 16px; margin-bottom: 8px; }
-
 .price {
     color: #facc15;
     font-weight: bold;
-    margin-bottom: 10px;
 }
 
 .seller {
     font-size: 12px;
     color: #94a3b8;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 button {
     width: 100%;
     padding: 10px;
-    border: none;
     border-radius: 8px;
     background: #facc15;
-    color: #020617;
-    font-weight: bold;
+    border: none;
     cursor: pointer;
-    transition: 0.3s;
 }
-
-button:hover { background: #eab308; }
 
 footer {
     text-align: center;
@@ -108,13 +102,13 @@ footer {
     color: #94a3b8;
 }
 </style>
-
 </head>
+
 <body>
 
 <header>
     <h2>MzanziMarket</h2>
-    <nav>
+    <nav id="navBar">
         <a href="index.html">Home</a>
         <a href="products.html">Shop</a>
         <a href="sell.html">Sell</a>
@@ -129,51 +123,85 @@ footer {
 
 <div class="container">
     <h2 class="section-title">Featured Products</h2>
-
-    <!-- ✅ EMPTY (will be filled by JS) -->
     <div class="products" id="productsContainer"></div>
 </div>
 
 <footer>
-    © 2026 KhozaMarket | C2C Marketplace SA
+    © 2026 KhozaMarket
 </footer>
 
 <!-- ✅ SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <script>
-// ✅ YOUR SUPABASE CONFIG
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co/rest/v1/";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM"; // keep your real key
+
+// ✅ CONFIG
+const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ✅ CHECK USER LOGIN
+async function checkUser() {
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    const nav = document.getElementById("navBar");
+
+    if (!user) return;
+
+    const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+    const name = profile?.full_name || "User";
+
+    nav.innerHTML = `
+        <a href="index.html">Home</a>
+        <a href="products.html">Shop</a>
+        <a href="sell.html">Sell</a>
+        <a>
+        <span style="margin-left:20px;">👋 ${name}</span>
+        <a href="#" onclick="logoutLOGOUT
+async function logout() {
+    await supabaseClient.auth.signOut();
+    window.location.reload();
+}
+
 // ✅ LOAD PRODUCTS
 async function loadProducts() {
-    console.log("Loading products...");
 
     const { data, error } = await supabaseClient
         .from('products')
         .select('*')
+        .eq('status', 'approved')
         .limit(6);
 
     if (error) {
-        console.error("Error loading products:", error);
+        console.error(error);
         return;
     }
 
     const container = document.getElementById('productsContainer');
     container.innerHTML = "";
 
+    if (!data || data.length === 0) {
+        container.innerHTML = "<p>No products available.</p>";
+        return;
+    }
+
     data.forEach(product => {
+
         const card = document.createElement('div');
         card.className = "card";
 
         card.innerHTML = `
             <h3>${product.name}</h3>
             <p class="price">R${product.price}</p>
-            <p class="seller">Seller: ${product.seller_name || "Unknown"}</p>
-            <a href="product.htmltton>
+            <p class="seller">Seller: ${product.seller_name}</p>
+            <a href="product.html?id=${product            <button>View</button>
             </a>
         `;
 
@@ -181,8 +209,10 @@ async function loadProducts() {
     });
 }
 
-// ✅ INITIAL LOAD
+// ✅ INIT
+checkUser();
 loadProducts();
+
 </script>
 
 </body>
