@@ -1,142 +1,36 @@
 <!DOCTYPE html>
 <html>
-<head>
-<title>Login</title>
+<head><title>Login</title></head>
+<body style="background:#0f172a;color:white;font-family:Segoe UI">
 
-<style>
-body{
-    background:#0f172a;
-    color:white;
-    font-family:'Segoe UI';
-}
-
-.container{
-    padding:40px;
-    max-width:400px;
-    margin:auto;
-}
-
-input{
-    display:block;
-    margin:10px 0;
-    padding:10px;
-    width:100%;
-    border:none;
-    border-radius:6px;
-}
-
-button{
-    background:#facc15;
-    padding:10px;
-    border:none;
-    width:100%;
-    border-radius:6px;
-    cursor:pointer;
-    font-weight:bold;
-}
-
-.message{
-    margin-top:15px;
-}
-</style>
-
-</head>
-<body>
-
-<div class="container">
 <h1>Login</h1>
 
-<input id="email" type="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
+<input id="email" placeholder="Email"><br><br>
+<input id="password" type="password" placeholder="Password"><br><br>
 
 <button onclick="login()">Login</button>
+<p id="msg"></p>
 
-<p class="message" id="message"></p>
-
-<p>
-Don't have an account? 
-<a href="register.html" style="color:#facc15;">Register</a>
-</p>
-</div>
-
-<!-- ✅ SUPABASE SCRIPT -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+const supabase = supabase.createClient(
+"https://lyvtjcnzeihsqvpzkced.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM"
+);
 
-// ✅ YOUR REAL CONFIG
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM"; // keep your key
+async function login(){
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const {error}=await supabase.auth.signInWithPassword({email,password});
 
-// ✅ CHECK IF USER ALREADY LOGGED IN
-async function checkSession() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-
-    if (user) {
-       console.log("Already logged in:", user);
-        window.location.href = "index.html";
-    }
+if(error){
+    document.getElementById("msg").innerText=error.message;
+}else{
+    location.href="index.html";
 }
-
-//checkSession();
-
-// ✅ LOGIN FUNCTION
-async function login() {
-
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-
-    if (!email || !password) {
-        setMessage("Enter email and password ❌", "red");
-        return;
-    }
-
-    setMessage("Logging in...", "#94a3b8");
-
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-    });
-
-    if (error) {
-        console.error("Login error:", error);
-        setMessage(error.message, "red");
-        return;
-    }
-
-    console.log("Login success:", data);
-
-    // ✅ GET USER PROFILE
-    const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-
-    console.log("User profile:", profile);
-
-    setMessage("Login successful ✅", "#22c55e");
-
-    // ✅ ROLE CHECK (for future admin access)
-    if (profile && profile.role === "admin") {
-        console.log("Admin user");
-    }
-
-    // ✅ Redirect
-    setTimeout(() => {
-        window.location.href = "index.html";
-    }, 1000);
 }
-
-// ✅ MESSAGE HELPER
-function setMessage(msg, color) {
-    const el = document.getElementById("message");
-    el.innerText = msg;
-    el.style.color = color;
-}
-
 </script>
 
 </body>
