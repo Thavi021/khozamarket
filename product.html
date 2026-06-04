@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Product</title>
+
+<style>
+*{margin:0;padding:0;}
+body{font-family:'Segoe UI';background:#0f172a;color:#fff;}
+
+header{background:#020617;padding:15px 40px;color:#facc15;}
+
+.container{padding:40px;}
+
+button{
+    margin-top:20px;
+    padding:12px;
+    background:#facc15;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+</style>
+
+</head>
+<body>
+
+<header>MzanziMarket</header>
+
+<div class="container">
+    <!-- ✅ Dynamic content -->
+    <h1 id="productName">Loading...</h1>
+    <p id="productPrice"></p>
+    <p id="productSeller"></p>
+    <p id="productDescription"></p>
+
+    <button onclick="addToCart()">Add to Cart</button>
+</div>
+
+<!-- ✅ SUPABASE -->
+https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js
+
+<script>
+
+// ✅ CONFIG
+const SUPABASE_URL = "https://qhzyesapzldfufygaopz.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ✅ GET PRODUCT ID FROM URL
+function getProductId() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("id");
+}
+
+let currentProduct = null;
+
+// ✅ LOAD PRODUCT
+async function loadProduct() {
+    const id = getProductId();
+
+    if (!id) {
+        document.getElementById("productName").innerText = "Product not found";
+        return;
+    }
+
+    console.log("Loading product ID:", id);
+
+    const { data, error } = await supabaseClient
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error("Error loading product:", error);
+        return;
+    }
+
+    currentProduct = data;
+
+    // ✅ Fill page
+    document.getElementById("productName").innerText = data.name;
+    document.getElementById("productPrice").innerText = "Price: R" + data.price;
+    document.getElementById("productSeller").innerText = "Seller: " + (data.seller_name || "Unknown");
+    document.getElementById("productDescription").innerText = "Description: " + (data.description || "No description");
+}
+
+// ✅ ADD TO CART (local storage for now)
+function addToCart() {
+    if (!currentProduct) return;
+
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    cart.push(currentProduct);
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+    alert("Added to cart ✅");
+}
+
+// ✅ INITIAL LOAD
+loadProduct();
+
+</script>
+
+</body>
+</html>
