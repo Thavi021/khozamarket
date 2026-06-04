@@ -37,7 +37,6 @@ button{
 
 .message{
     margin-top:15px;
-    font-size:14px;
 }
 </style>
 
@@ -45,6 +44,7 @@ button{
 <body>
 
 <div class="container">
+
 <h1>Create Account</h1>
 
 <input id="name" placeholder="Full Name">
@@ -53,9 +53,9 @@ button{
 
 <button onclick="register()">Register</button>
 
-<p class="message" id="message"></p>
+<p id="message" class="message"></p>
 
-<p style="margin-top:20px;">
+<p>
 Already have an account? 
 <a href="login.html" style="color:#facc15;">Login</a>
 </p>
@@ -63,32 +63,28 @@ Already have an account?
 </div>
 
 <!-- ✅ SUPABASE -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js
 
 <script>
 
-// ✅ CONFIG
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co/rest/v1/";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7z21hvacVW6qTfM";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ✅ REGISTER FUNCTION
 async function register() {
 
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
 
-    // ✅ Basic validation
     if (!name || !email || !password) {
-        setMessage("Please fill all fields ❌", "red");
+        setMessage("Fill all fields ❌");
         return;
     }
 
-    setMessage("Creating account...", "#94a3b8");
+    setMessage("Creating account...");
 
-    // ✅ SIGN UP
     const { data, error } = await supabaseClient.auth.signUp({
         email,
         password,
@@ -98,11 +94,11 @@ async function register() {
     });
 
     if (error) {
-        setMessage(error.message, "red");
+        setMessage(error.message);
         return;
     }
 
-    // ✅ OPTIONAL: Insert into profiles table
+    // ✅ Save profile
     if (data.user) {
         await supabaseClient.from('profiles').insert([{
             id: data.user.id,
@@ -110,19 +106,15 @@ async function register() {
         }]);
     }
 
-    setMessage("Registered successfully ✅ Please login.", "#22c55e");
+    setMessage("Registered ✅ Redirecting...");
 
-    // ✅ Redirect after short delay
     setTimeout(() => {
         window.location.href = "login.html";
     }, 1500);
 }
 
-// ✅ HELPER
-function setMessage(text, color) {
-    const msg = document.getElementById("message");
-    msg.innerText = text;
-    msg.style.color = color;
+function setMessage(msg) {
+    document.getElementById("message").innerText = msg;
 }
 
 </script>
