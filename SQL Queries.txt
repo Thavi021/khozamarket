@@ -7,6 +7,7 @@ create table products (
 );
 
 alter table products add column description text;
+alter table products add column seller_id uuid;
 
 
 alter table products enable row level security;
@@ -16,3 +17,9 @@ on products
 for select
 to public
 using (true);
+
+create policy "Users can insert products"
+on products
+for insert
+to authenticated
+with check (auth.uid() = seller_id);
