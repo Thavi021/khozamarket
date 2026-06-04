@@ -4,34 +4,61 @@
 <title>Login</title>
 
 <style>
-body{background:#0f172a;color:white;font-family:'Segoe UI';}
-.container{padding:40px;}
-input{display:block;margin:10px 0;padding:10px;width:100%;}
-button{background:#facc15;padding:10px;border:none;cursor:pointer;}
+body{
+    background:#0f172a;
+    color:white;
+    font-family:'Segoe UI';
+}
+
+.container{
+    padding:40px;
+    max-width:400px;
+    margin:auto;
+}
+
+input{
+    display:block;
+    margin:10px 0;
+    padding:10px;
+    width:100%;
+    border:none;
+    border-radius:6px;
+}
+
+button{
+    background:#facc15;
+    padding:10px;
+    border:none;
+    width:100%;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.message{
+    margin-top:15px;
+}
 </style>
 
 </head>
 <body>
 
 <div class="container">
+
 <h1>Login</h1>
 
-<input id="email" placeholder="Email">
+<input id="email" type="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
 
 <button onclick="login()">Login</button>
 
-<p><a href="register.html">Register</a></p>
+<p class="message" id="message"></p>
 
-<br>
+<p>
+Don't have an account? 
+<a href="register.html" style="color:#facc15;">Register</a>
+</p>
 
-<a href="admin.html">
-    <button style="background:#1e293b; color:#facc15; border:1px solid #facc15;">
-        Admin Access
-    </button>
-</a>
-
-<p id="message"></p>
 </div>
 
 <!-- ✅ SUPABASE -->
@@ -39,16 +66,24 @@ button{background:#facc15;padding:10px;border:none;cursor:pointer;}
 
 <script>
 
-// ✅ CONFIG
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co/rest/v1/";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+// ✅ CONFIG (your real project)
+const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7z21hvacVW6qTfM";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ✅ LOGIN FUNCTION
 async function login() {
-    const email = document.getElementById("email").value;
+
+    const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+        setMessage("Enter email and password ❌", "red");
+        return;
+    }
+
+    setMessage("Logging in...", "#94a3b8");
 
     const { data, error } = await supabaseClient.auth.signInWithPassword({
         email,
@@ -56,17 +91,28 @@ async function login() {
     });
 
     if (error) {
-        document.getElementById("message").innerText = error.message;
+        console.error(error);
+        setMessage(error.message, "red");
         return;
     }
 
-    document.getElementById("message").innerText = "Logged in ✅";
+    console.log("Login success:", data);
 
-    console.log(data);
+    setMessage("Login successful ✅", "#22c55e");
 
-    // ✅ redirect after login
-    window.location.href = "index.html";
+    // ✅ Redirect after login
+    setTimeout(() => {
+        window.location.href = "index.html";
+    }, 1000);
 }
+
+// ✅ Helper
+function setMessage(msg, color) {
+    const el = document.getElementById("message");
+    el.innerText = msg;
+    el.style.color = color;
+}
+
 </script>
 
 </body>
