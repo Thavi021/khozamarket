@@ -1,132 +1,50 @@
 <!DOCTYPE html>
 <html>
-<head>
-<title>Sell Item</title>
+<head><title>Sell</title></head>
+<body style="background:#0f172a;color:white">
 
-<style>
-body{background:#0f172a;color:white;font-family:'Segoe UI';}
-.container{padding:40px;max-width:500px;margin:auto;}
-
-input,textarea{
-    width:100%;
-    margin:10px 0;
-    padding:10px;
-    border-radius:6px;
-    border:none;
-}
-
-button{
-    padding:10px;
-    background:#facc15;
-    border:none;
-    cursor:pointer;
-    width:100%;
-    border-radius:6px;
-    font-weight:bold;
-}
-
-.message{
-    margin-top:10px;
-}
-</style>
-
-</head>
-
-<body>
-
-<div class="container">
 <h1>Sell Item</h1>
 
-<input id="name" placeholder="Product Name">
-<input id="price" placeholder="Price (e.g. 500)">
-<textarea id="description" placeholder="Description"></textarea>
+<input id="name" placeholder="Name"><br><br>
+<input id="price" placeholder="Price"><br><br>
+<textarea id="desc"></textarea><br><br>
 
-<button id="postBtn" onclick="postProduct()">Post</button>
+<button onclick="post()">Post</button>
 
-<p id="message" class="message"></p>
-</div>
-
-<!-- ✅ SUPABASE -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+const supabase = supabase.createClient(
+"https://lyvtjcnzeihsqvpzkced.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM"
+);
 
-// ✅ CONFIG (FIXED)
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
-const SUPABASE_KEY = "YOUR_ANON_KEY";
+async function post(){
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const {data:{user}}=await supabase.auth.getUser();
 
-// ✅ POST PRODUCT
-async function postProduct() {
-
-    const btn = document.getElementById("postBtn");
-    btn.disabled = true;
-
-    const name = document.getElementById("name").value.trim();
-    const price = document.getElementById("price").value.trim();
-    const description = document.getElementById("description").value.trim();
-
-    if (!name || !price) {
-        setMessage("Fill all fields ❌", "red");
-        btn.disabled = false;
-        return;
-    }
-
-    // ✅ GET USER
-    const { data: { user } } = await supabaseClient.auth.getUser();
-
-    if (!user) {
-        setMessage("You must login first ❌", "red");
-        btn.disabled = false;
-        return;
-    }
-
-    // ✅ GET PROFILE (IMPORTANT FIX)
-    const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-    const sellerName = profile?.full_name || "User";
-
-    // ✅ INSERT PRODUCT
-    const { error } = await supabaseClient
-        .from('products')
-        .insert([{
-            name: name,
-            price: price,
-            description: description,
-            seller_id: user.id,
-            seller_name: sellerName,
-            status: "pending"
-        }]);
-
-    if (error) {
-        console.error(error);
-        setMessage(error.message, "red");
-        btn.disabled = false;
-        return;
-    }
-
-    setMessage("Product submitted ✅ Waiting for admin approval", "#22c55e");
-
-    // ✅ CLEAR FORM
-    document.getElementById("name").value = "";
-    document.getElementById("price").value = "";
-    document.getElementById("description").value = "";
-
-    btn.disabled = false;
+if(!user){
+alert("Login first");
+return;
 }
 
-// ✅ HELPER
-function setMessage(msg, color) {
-    const el = document.getElementById("message");
-    el.innerText = msg;
-    el.style.color = color;
-}
+const {data:profile}=await supabase
+.from('profiles')
+.select('*')
+.eq('id',user.id)
+.single();
 
+await supabase.from('products').insert([{
+name:document.getElementById("name").value,
+price:document.getElementById("price").value,
+description:document.getElementById("desc").value,
+seller_id:user.id,
+seller_name:profile.full_name
+}]);
+
+alert("Submitted for approval");
+
+}
 </script>
 
 </body>
