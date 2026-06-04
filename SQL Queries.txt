@@ -80,3 +80,7 @@ create table profiles (create  id uuid primary key,
   created_at timestamp default now()
 );
 
+
+alter table products add column status text default 'pending';
+
+
