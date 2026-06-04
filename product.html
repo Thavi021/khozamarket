@@ -1,108 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Product</title>
+<html>
+<body style="background:#0f172a;color:white">
 
-<style>
-*{margin:0;padding:0;}
-body{font-family:'Segoe UI';background:#0f172a;color:#fff;}
+<h1>Products</h1>
+<div id="list"></div>
 
-header{background:#020617;padding:15px 40px;color:#facc15;}
-
-.container{padding:40px;}
-
-button{
-    margin-top:20px;
-    padding:12px;
-    background:#facc15;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-}
-</style>
-
-</head>
-<body>
-
-<header>MzanziMarket</header>
-
-<div class="container">
-    <!-- ✅ Dynamic content -->
-    <h1 id="productName">Loading...</h1>
-    <p id="productPrice"></p>
-    <p id="productSeller"></p>
-    <p id="productDescription"></p>
-
-    <button onclick="addToCart()">Add to Cart</button>
-</div>
-
-<!-- ✅ SUPABASE -->
-https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+const supabase = supabase.createClient(
+"https://lyvtjcnzeihsqvpzkced.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM"
+);
 
-// ✅ CONFIG
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co/rest/v1/";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
-
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ✅ GET PRODUCT ID FROM URL
-function getProductId() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("id");
+async function load(){
+const {data}=await supabase.from('products').select('*').eq('status','approved');
+document.getElementById("list").innerHTML=JSON.stringify(data,null,2);
 }
-
-let currentProduct = null;
-
-// ✅ LOAD PRODUCT
-async function loadProduct() {
-    const id = getProductId();
-
-    if (!id) {
-        document.getElementById("productName").innerText = "Product not found";
-        return;
-    }
-
-    console.log("Loading product ID:", id);
-
-    const { data, error } = await supabaseClient
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-    if (error) {
-        console.error("Error loading product:", error);
-        return;
-    }
-
-    currentProduct = data;
-
-    // ✅ Fill page
-    document.getElementById("productName").innerText = data.name;
-    document.getElementById("productPrice").innerText = "Price: R" + data.price;
-    document.getElementById("productSeller").innerText = "Seller: " + (data.seller_name || "Unknown");
-    document.getElementById("productDescription").innerText = "Description: " + (data.description || "No description");
-}
-
-// ✅ ADD TO CART (local storage for now)
-function addToCart() {
-    if (!currentProduct) return;
-
-    let cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-    cart.push(currentProduct);
-
-    localStorage.setItem("cart", JSON.stringify(cart));
-
-    alert("Added to cart ✅");
-}
-
-// ✅ INITIAL LOAD
-loadProduct();
-
+load();
 </script>
 
 </body>
