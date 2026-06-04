@@ -44,7 +44,6 @@ button{
 <body>
 
 <div class="container">
-
 <h1>Login</h1>
 
 <input id="email" type="email" placeholder="Email">
@@ -58,19 +57,30 @@ button{
 Don't have an account? 
 <a href="register.html" style="color:#facc15;">Register</a>
 </p>
-
 </div>
 
-<!-- ✅ SUPABASE -->
+<!-- ✅ SUPABASE SCRIPT -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <script>
 
-// ✅ CONFIG (your real project)
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co/rest/v1/";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+// ✅ YOUR REAL CONFIG
+const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM"; // keep your key
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ✅ CHECK IF USER ALREADY LOGGED IN
+async function checkSession() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    if (user) {
+        console.log("Already logged in:", user);
+        window.location.href = "index.html";
+    }
+}
+
+checkSession();
 
 // ✅ LOGIN FUNCTION
 async function login() {
@@ -91,22 +101,36 @@ async function login() {
     });
 
     if (error) {
-        console.error(error);
+        console.error("Login error:", error);
         setMessage(error.message, "red");
         return;
     }
 
     console.log("Login success:", data);
 
+    // ✅ GET USER PROFILE
+    const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+    console.log("User profile:", profile);
+
     setMessage("Login successful ✅", "#22c55e");
 
-    // ✅ Redirect after login
+    // ✅ ROLE CHECK (for future admin access)
+    if (profile && profile.role === "admin") {
+        console.log("Admin user");
+    }
+
+    // ✅ Redirect
     setTimeout(() => {
         window.location.href = "index.html";
     }, 1000);
 }
 
-// ✅ Helper
+// ✅ MESSAGE HELPER
 function setMessage(msg, color) {
     const el = document.getElementById("message");
     el.innerText = msg;
