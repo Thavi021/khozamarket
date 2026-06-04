@@ -59,3 +59,18 @@ on order_items
 for select
 to public
 using (true);
+
+-- Orders insert
+create policy "Insert orders"
+on orders
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+-- Order items insert
+create policy "Insert order items"
+on order_items
+for insert
+to authenticated
+with check (true);
+``
