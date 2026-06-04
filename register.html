@@ -1,147 +1,44 @@
 <!DOCTYPE html>
 <html>
-<head>
-<title>Register</title>
+<head><title>Register</title></head>
+<body style="background:#0f172a;color:white;font-family:Segoe UI">
 
-<style>
-body{
-    background:#0f172a;
-    color:white;
-    font-family:'Segoe UI';
-}
+<h1>Register</h1>
 
-.container{
-    padding:40px;
-    max-width:400px;
-    margin:auto;
-}
+<input id="name" placeholder="Name"><br><br>
+<input id="email" placeholder="Email"><br><br>
+<input id="password" type="password"><br><br>
 
-input{
-    display:block;
-    margin:10px 0;
-    padding:10px;
-    width:100%;
-    border:none;
-    border-radius:6px;
-}
+<button onclick="register()">Register</button>
 
-button{
-    background:#facc15;
-    padding:10px;
-    border:none;
-    width:100%;
-    border-radius:6px;
-    cursor:pointer;
-    font-weight:bold;
-}
-
-button:disabled{
-    opacity:0.5;
-    cursor:not-allowed;
-}
-
-.message{
-    margin-top:15px;
-}
-</style>
-
-</head>
-<body>
-
-<div class="container">
-
-<h1>Create Account</h1>
-
-<input id="name" placeholder="Full Name">
-<input id="email" type="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
-
-<button id="registerBtn" onclick="register()">Register</button>
-
-<p id="message" class="message"></p>
-
-<p style="margin-top:20px;">
-Already have an account? 
-<a href="login.html" style="color:#facc15;">Login</a>
-</p>
-
-</div>
-
-<!-- ✅ SUPABASE SCRIPT (CRITICAL) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+const supabase = supabase.createClient(
+"https://lyvtjcnzeihsqvpzkced.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM"
+);
 
-// ✅ YOUR REAL CONFIG
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
-const SUPABASE_KEY = "YOUR_ANON_KEY_HERE";
+async function register(){
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const name=document.getElementById("name").value;
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
 
-// ✅ REGISTER FUNCTION
-async function register() {
+const {data,error}=await supabase.auth.signUp({email,password});
 
-    const btn = document.getElementById("registerBtn");
-    btn.disabled = true;
+if(error) return alert(error.message);
 
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+await supabase.from('profiles').insert([{
+id:data.user.id,
+full_name:name,
+email:email
+}]);
 
-    if (!name || !email || !password) {
-        setMessage("Fill all fields ❌", "red");
-        btn.disabled = false;
-        return;
-    }
+alert("Registered!");
+location.href="login.html";
 
-    setMessage("Creating account...", "#94a3b8");
-
-    // ✅ CREATE AUTH USER
-    const { data, error } = await supabaseClient.auth.signUp({
-        email,
-        password,
-        options: {
-            data: { full_name: name }
-        }
-    });
-
-    if (error) {
-        console.error(error);
-        setMessage(error.message, "red");
-        btn.disabled = false;
-        return;
-    }
-
-    // ✅ CREATE PROFILE (IMPORTANT)
-    if (data.user) {
-        const { error: profileError } = await supabaseClient
-            .from('profiles')
-            .insert([{
-                id: data.user.id,
-                full_name: name,
-                email: email,
-                role: "user"
-            }]);
-
-        if (profileError) {
-            console.error("Profile error:", profileError);
-        }
-    }
-
-    setMessage("Account created ✅ Redirecting...", "#22c55e");
-
-    setTimeout(() => {
-        window.location.href = "login.html";
-    }, 1500);
 }
-
-// ✅ MESSAGE HELPER
-function setMessage(msg, color) {
-    const el = document.getElementById("message");
-    el.innerText = msg;
-    el.style.color = color;
-}
-
 </script>
 
 </body>
