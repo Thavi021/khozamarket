@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Products</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI';background:#0f172a;color:#f1f5f9;}
+
+header{
+    background:#020617;
+    display:flex;
+    justify-content:space-between;
+    padding:15px 40px;
+}
+
+header h2{color:#facc15;}
+
+nav a{
+    color:#e2e8f0;
+    margin-left:20px;
+    text-decoration:none;
+}
+
+nav a:hover{color:#facc15;}
+
+.container{padding:40px;}
+
+.products{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:#1e293b;
+    padding:20px;
+    border-radius:15px;
+}
+
+.price{color:#facc15;}
+
+button{
+    width:100%;
+    padding:10px;
+    background:#facc15;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+</style>
+
+</head>
+<body>
+
+<header>
+<h2>MzanziMarket</h2>
+<nav>
+<a href="index.html">Home</a>
+<a href="cart.html">Cart</a>
+</nav>
+</header>
+
+<div class="container">
+<h1>All Products</h1>
+
+<!-- ✅ EMPTY container -->
+<div class="products" id="productsContainer"></div>
+
+</div>
+
+<!-- ✅ SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script>
+
+// ✅ CONFIG
+const SUPABASE_URL = "https://qhzyesapzldfufygaopz.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ✅ LOAD ALL PRODUCTS
+async function loadProducts() {
+    console.log("Loading all products...");
+
+    const { data, error } = await supabaseClient
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error loading products:", error);
+        return;
+    }
+
+    const container = document.getElementById('productsContainer');
+    container.innerHTML = "";
+
+    if (data.length === 0) {
+        container.innerHTML = "<p>No products available.</p>";
+        return;
+    }
+
+    data.forEach(product => {
+        const card = document.createElement('div');
+        card.className = "card";
+
+        card.innerHTML = `
+            <h3>${product.name}</h3>
+            <p class="price">R${product.price}</p>
+            <p>Seller: ${product.seller_name || "Unknown"}</p>
+            <a hreft.id}
+                <button>View</button>
+            </a>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+// ✅ INITIAL LOAD
+loadProducts();
+
+</script>
+
+</body>
+</html>
