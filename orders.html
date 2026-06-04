@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Order Monitoring</title>
+
+<style>
+body{background:#0f172a;color:white;font-family:'Segoe UI';padding:40px;}
+h1{color:#facc15;}
+
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px;border-bottom:1px solid #333;}
+th{color:#facc15;}
+</style>
+
+</head>
+<body>
+
+<h1>Order Monitoring</h1>
+
+<table>
+<thead>
+<tr>
+<th>Order ID</th>
+<th>Buyer</th>
+<th>Products</th>
+<th>Total</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody id="ordersTable"></tbody>
+</table>
+
+<br>
+<a href="admin.html"><button>Back</button></a>
+
+<!-- ✅ SUPABASE -->
+https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js
+
+<script>
+
+// ✅ CONFIG
+const SUPABASE_URL = "https://qhzyesapzldfufygaopz.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ✅ LOAD ORDERS
+async function loadOrders() {
+    console.log("Loading orders...");
+
+    const { data: orders, error } = await supabaseClient
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    const table = document.getElementById("ordersTable");
+    table.innerHTML = "";
+
+    for (let order of orders) {
+
+        // ✅ get order items
+        const { data: items } = await supabaseClient
+            .from('order_items')
+            .select('*')
+            .eq('order_id', order.id);
+
+        const productNames = items.map(i => i.name).join(", ");
+
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${order.id}</td>
+            <td>${order.user_id}</td>
+            <td>${productNames}</td>
+            <td>R${order.total}</td>
+            <td>${order.status}</td>
+        `;
+
+        table.appendChild(row);
+    }
+}
+
+// ✅ INIT
+loadOrders();
+
+</script>
+
+</body>
+</html>
+``
