@@ -35,9 +35,13 @@ button{
     font-weight:bold;
 }
 
+button:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+}
+
 .message{
     margin-top:15px;
-    font-size:14px;
 }
 </style>
 
@@ -45,15 +49,16 @@ button{
 <body>
 
 <div class="container">
+
 <h1>Create Account</h1>
 
 <input id="name" placeholder="Full Name">
 <input id="email" type="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
 
-<button onclick="register()">Register</button>
+<button id="registerBtn" onclick="register()">Register</button>
 
-<p class="message" id="message"></p>
+<p id="message" class="message"></p>
 
 <p style="margin-top:20px;">
 Already have an account? 
@@ -62,33 +67,36 @@ Already have an account?
 
 </div>
 
-<!-- ✅ SUPABASE -->
+<!-- ✅ SUPABASE SCRIPT (CRITICAL) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <script>
 
-// ✅ CONFIG
+// ✅ YOUR REAL CONFIG
 const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+const SUPABASE_KEY = "YOUR_ANON_KEY_HERE";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ✅ REGISTER FUNCTION
 async function register() {
 
+    const btn = document.getElementById("registerBtn");
+    btn.disabled = true;
+
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
 
-    // ✅ Basic validation
     if (!name || !email || !password) {
-        setMessage("Please fill all fields ❌", "red");
+        setMessage("Fill all fields ❌", "red");
+        btn.disabled = false;
         return;
     }
 
     setMessage("Creating account...", "#94a3b8");
 
-    // ✅ SIGN UP
+    // ✅ CREATE AUTH USER
     const { data, error } = await supabaseClient.auth.signUp({
         email,
         password,
@@ -98,31 +106,40 @@ async function register() {
     });
 
     if (error) {
+        console.error(error);
         setMessage(error.message, "red");
+        btn.disabled = false;
         return;
     }
 
-    // ✅ OPTIONAL: Insert into profiles table
+    // ✅ CREATE PROFILE (IMPORTANT)
     if (data.user) {
-        await supabaseClient.from('profiles').insert([{
-            id: data.user.id,
-            full_name: name
-        }]);
+        const { error: profileError } = await supabaseClient
+            .from('profiles')
+            .insert([{
+                id: data.user.id,
+                full_name: name,
+                email: email,
+                role: "user"
+            }]);
+
+        if (profileError) {
+            console.error("Profile error:", profileError);
+        }
     }
 
-    setMessage("Registered successfully ✅ Please login.", "#22c55e");
+    setMessage("Account created ✅ Redirecting...", "#22c55e");
 
-    // ✅ Redirect after short delay
     setTimeout(() => {
         window.location.href = "login.html";
     }, 1500);
 }
 
-// ✅ HELPER
-function setMessage(text, color) {
-    const msg = document.getElementById("message");
-    msg.innerText = text;
-    msg.style.color = color;
+// ✅ MESSAGE HELPER
+function setMessage(msg, color) {
+    const el = document.getElementById("message");
+    el.innerText = msg;
+    el.style.color = color;
 }
 
 </script>
