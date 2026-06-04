@@ -6,6 +6,9 @@ create table products (
   created_at timestamp default now()
 );
 
+alter table products add column description text;
+
+
 alter table products enable row level security;
 
 create policy "Allow read products"
