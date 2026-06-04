@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sell Item</title>
+
+<style>
+body{background:#0f172a;color:white;font-family:'Segoe UI';}
+.container{padding:40px;}
+input,textarea{
+    width:100%;
+    margin:10px 0;
+    padding:10px;
+}
+button{
+    padding:10px;
+    background:#facc15;
+    border:none;
+    cursor:pointer;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+<h1>Sell Item</h1>
+
+<input id="name" placeholder="Product Name">
+<input id="price" placeholder="Price">
+<textarea id="description" placeholder="Description"></textarea>
+
+<button onclick="postProduct()">Post</button>
+
+<p id="message"></p>
+</div>
+
+<!-- ✅ SUPABASE -->
+https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js
+
+<script>
+
+// ✅ CONFIG
+const SUPABASE_URL = "https://qhzyesapzldfufygaopz.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ✅ POST PRODUCT
+async function postProduct() {
+
+    const name = document.getElementById("name").value;
+    const price = document.getElementById("price").value;
+    const description = document.getElementById("description").value;
+
+    // ✅ GET LOGGED-IN USER
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    if (!user) {
+        document.getElementById("message").innerText = "You must login first ❌";
+        return;
+    }
+
+    // ✅ INSERT INTO DB
+    const { data, error } = await supabaseClient
+        .from('products')
+        .insert([{
+            name: name,
+            price: price,
+            description: description,
+            seller_id: user.id,
+            seller_name: user.user_metadata.full_name || "User"
+        }]);
+
+    if (error) {
+        console.error(error);
+        document.getElementById("message").innerText = error.message;
+        return;
+    }
+
+    document.getElementById("message").innerText = "Product posted ✅";
+
+    console.log(data);
+
+    // ✅ CLEAR FORM
+    document.getElementById("name").value = "";
+    document.getElementById("price").value = "";
+    document.getElementById("description").value = "";
+}
+
+</script>
+
+</body>
+</html>
