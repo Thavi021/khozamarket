@@ -74,3 +74,9 @@ for insert
 to authenticated
 with check (true);
 ``
+
+create table profiles (create  id uuid primary key,
+  full_name text,
+  created_at timestamp default now()
+);
+
