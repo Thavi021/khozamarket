@@ -1,185 +1,139 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Cart</title>
+<meta charset="UTF-8">
+<title>Your Cart</title>
 
 <style>
-body{
-    background:#0f172a;
-    color:white;
-    font-family:'Segoe UI';
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #0f172a;
+    color: #f1f5f9;
+    padding: 40px;
 }
 
-.container{
-    padding:40px;
+h1 {
+    margin-bottom: 20px;
 }
 
-.item{
-    background:#1e293b;
-    padding:15px;
-    margin-bottom:15px;
-    border-radius:10px;
+.container {
+    max-width: 700px;
+    margin: auto;
 }
 
-button{
-    padding:10px;
-    background:#facc15;
-    border:none;
-    cursor:pointer;
-    margin-top:10px;
+.cart-item {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 15px;
 }
 
-.remove-btn{
-    background:red;
-    color:white;
-    margin-left:10px;
+.price {
+    color: #facc15;
+    font-weight: bold;
+}
+
+button {
+    margin-top: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #facc15;
+    color: #020617;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #eab308;
+}
+
+.total {
+    font-size: 20px;
+    margin-top: 20px;
+}
+
+.empty {
+    color: #94a3b8;
+}
+
+.checkout-btn {
+    width: 100%;
+    margin-top: 20px;
 }
 </style>
-
 </head>
+
 <body>
 
 <div class="container">
-<h1>Your Cart</h1>
+    <h1>Your Cart</h1>
 
-<div id="cartItems"></div>
+    <div id="cart-items"></div>
 
-<h3 id="total">Total: R0</h3>
+    <div id="total"></div>
 
-<button onclick="checkout()">Checkout</button>
-
-<p id="message"></p>
+    <button class="checkout-btn" onclick="checkout()">
+        Checkout
+    </button>
 </div>
 
-<!-- ✅ SUPABASE -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
 <script>
-
-// ✅ CONFIG
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co/rest/v1/";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
-
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ✅ CART HANDLING
-function getCart() {
-    return JSON.parse(localStorage.getItem("cart")) || [];
-}
-
-function saveCart(cart) {
-    localStorage.setItem("cart", JSON.stringify(cart));
-}
-
-// ✅ DISPLAY CART
 function loadCart() {
-    const cart = getCart();
-    const container = document.getElementById("cartItems");
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    const container = document.getElementById("cart-items");
+    const totalDiv = document.getElementById("total");
+
     container.innerHTML = "";
+
+    if (cart.length === 0) {
+        container.innerHTML = "<p class='empty'>Your cart is empty</p>";
+        totalDiv.innerHTML = "";
+        return;
+    }
 
     let total = 0;
 
-    if (cart.length === 0) {
-        container.innerHTML = "<p>Your cart is empty.</p>";
-        document.getElementById("total").innerText = "Total: R0";
-        return;
-    }
-
     cart.forEach((item, index) => {
-        total += Number(item.price);
+        total += item.price;
 
-        const div = document.createElement("div");
-        div.className = "item";
-
-        div.innerHTML = `
-            <h3>${item.name}</h3>
-            <p>Price: R${item.price}</p>
-            <button class="remove-btn" onclick="removeItem(${index})">Remove</button>
+        container.innerHTML += `
+            <div class="cart-item">
+                <h3>${item.name}</h3>
+                <p class="price">R${item.price}</p>
+                <button onclick="removeItem(${index})">Remove</button>
+            </div>
         `;
-
-        container.appendChild(div);
     });
 
-    document.getElementById("total").innerText = "Total: R" + total;
+    totalDiv.innerHTML = `<p class="total">Total: R${total}</p>`;
 }
 
-// ✅ REMOVE ITEM
 function removeItem(index) {
-    let cart = getCart();
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
     cart.splice(index, 1);
-    saveCart(cart);
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+
     loadCart();
 }
 
-// ✅ CHECKOUT FUNCTION (REAL IMPLEMENTATION)
-async function checkout() {
-
-    const cart = getCart();
+function checkout() {
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
     if (cart.length === 0) {
-        alert("Cart is empty");
+        alert("Your cart is empty");
         return;
     }
 
-    // ✅ GET CURRENT USER
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    alert("🚀 Next step: connect to orders table");
 
-    if (!user) {
-        alert("You must login first ❌");
-        return;
-    }
-
-    const total = cart.reduce((sum, item) => sum + Number(item.price), 0);
-
-    // ✅ CREATE ORDER
-    const { data: orderData, error: orderError } = await supabaseClient
-        .from('orders')
-        .insert([{
-            user_id: user.id,
-            total: total,
-            status: "pending"
-        }])
-        .select()
-        .single();
-
-    if (orderError) {
-        console.error(orderError);
-        document.getElementById("message").innerText = "Order failed ❌";
-        return;
-    }
-
-    const orderId = orderData.id;
-
-    // ✅ INSERT ORDER ITEMS
-    const itemsToInsert = cart.map(item => ({
-        order_id: orderId,
-        product_id: item.id,
-        name: item.name,
-        price: item.price
-    }));
-
-    const { error: itemsError } = await supabaseClient
-        .from('order_items')
-        .insert(itemsToInsert);
-
-    if (itemsError) {
-        console.error(itemsError);
-        document.getElementById("message").innerText = "Items save failed ❌";
-        return;
-    }
-
-    // ✅ CLEAR CART
-    localStorage.removeItem("cart");
-
-    // ✅ SUCCESS
-    document.getElementById("message").innerText = "Order placed ✅";
-
-    loadCart();
+    // 🔥 Future: send to Supabase orders table
 }
 
-// ✅ INIT
 loadCart();
-
 </script>
 
 </body>
