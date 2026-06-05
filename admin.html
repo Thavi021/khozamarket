@@ -63,37 +63,68 @@ button{
 
 </div>
 
-<!-- ✅ SUPABASE -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- ✅ CORRECT SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
-// ✅ CONFIG
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co/rest/v1/";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+// ✅ FIXED CONFIG (IMPORTANT)
+const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
+const SUPABASE_KEY = "YOUR_KEY_HERE";
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
 
-// ✅ LOAD DASHBOARD STATS
+// ✅ ✅ CHECK ADMIN ACCESS
+async function checkAdmin() {
+
+    const { data: { user } } = await client.auth.getUser();
+
+    if (!user) {
+        document.body.innerHTML = "❌ Please login first";
+        return false;
+    }
+
+    const { data, error } = await client
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    if (error || !data || data.role !== "admin") {
+        document.body.innerHTML = "❌ Access Denied (Admin only)";
+        return false;
+    }
+
+    return true;
+}
+
+// ✅ ✅ LOAD STATS (FIXED)
 async function loadStats() {
+
+    const isAdmin = await checkAdmin();
+    if (!isAdmin) return;
 
     console.log("Loading dashboard stats...");
 
-    // ✅ Orders count
-    const { count: ordersCount } = await supabaseClient
+    // ✅ USERS (profiles table, not auth!)
+    const { count: usersCount } = await client
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+    // ✅ ORDERS
+    const { count: ordersCount } = await client
         .from('orders')
         .select('*', { count: 'exact', head: true });
 
-    // ✅ Products count
-    const { count: productsCount } = await supabaseClient
+    // ✅ PRODUCTS
+    const { count: productsCount } = await client
         .from('products')
         .select('*', { count: 'exact', head: true });
 
-    // ⚠️ USERS COUNT (special case)
-    // Cannot directly query auth users from frontend securely
-    // So for now we display placeholder OR later create profiles table
-
-    document.getElementById("userCount").innerText = "N/A";
+    document.getElementById("userCount").innerText = usersCount || 0;
     document.getElementById("orderCount").innerText = ordersCount || 0;
     document.getElementById("productCount").innerText = productsCount || 0;
 }
@@ -105,3 +136,4 @@ loadStats();
 
 </body>
 </html>
+``
