@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Product Details</title>
 
-<!-- ✅ FIXED SCRIPT -->
+<!-- ✅ Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -63,9 +63,9 @@ button:hover {
 </div>
 
 <script>
-// ✅ YOUR WORKING CONNECTION
+// ✅ Supabase connection
 const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+const SUPABASE_KEY = "YOUR_KEY_HERE";
 
 const client = window.supabase.createClient(
     SUPABASE_URL,
@@ -88,7 +88,7 @@ async function loadProduct() {
     const { data, error } = await client
         .from('products')
         .select('*')
-        .eq('id', Number(id))   // ✅ FIXED (important)
+        .eq('id', Number(id))
         .single();
 
     console.log("DATA:", data);
@@ -108,7 +108,7 @@ async function loadProduct() {
             <p class="desc">${data.description || "No description available"}</p>
             <p>Seller: ${data.seller_name}</p>
 
-            <button onclick="addToCart(${data.id}, '${data.name}', ${data.price})">
+            <button onclick='addToCart(${data.id}, ${JSON.stringify(data.name)}, ${data.price})'>
                 Add to Cart
             </button>
 
@@ -119,10 +119,19 @@ async function loadProduct() {
     `;
 }
 
-// ✅ ADD TO CART (LOCAL STORAGE SIMPLE VERSION)
+// ✅ ADD TO CART + REDIRECT
 function addToCart(id, name, price) {
 
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    // ✅ Prevent duplicates
+    const existingItem = cart.find(item => item.id === id);
+
+    if (existingItem) {
+        alert("✅ Already in cart");
+        window.location.href = "index.html"; // redirect anyway
+        return;
+    }
 
     cart.push({
         id: id,
@@ -132,10 +141,15 @@ function addToCart(id, name, price) {
 
     localStorage.setItem("cart", JSON.stringify(cart));
 
-    alert("✅ Added to cart");
+    console.log("UPDATED CART:", cart);
+
+    alert("✅ Added to cart!");
+
+    // ✅ REDIRECT TO HOME
+    window.location.href = "index.html";
 }
 
-// ✅ BUY NOW (placeholder)
+// ✅ BUY NOW (optional)
 function buyNow(id) {
     alert("🚀 Checkout coming next");
 }
