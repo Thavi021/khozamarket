@@ -83,7 +83,7 @@ async function checkAdmin() {
     const { data: { user } } = await client.auth.getUser();
 
     if (!user) {
-        document.body.innerHTML = "❌ Please login first";
+        window.location.href = "login.html";
         return false;
     }
 
@@ -94,7 +94,7 @@ async function checkAdmin() {
         .single();
 
     if (error || !data || data.role !== "admin") {
-        document.body.innerHTML = "❌ Access Denied (Admin only)";
+        document.body.innerHTML = "❌ Admin access only";
         return false;
     }
 
