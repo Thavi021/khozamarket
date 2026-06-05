@@ -77,29 +77,7 @@ const client = window.supabase.createClient(
     SUPABASE_KEY
 );
 
-// ✅ ✅ CHECK ADMIN ACCESS
-async function checkAdmin() {
 
-    const { data: { user } } = await client.auth.getUser();
-
-    if (!user) {
-        window.location.href = "login.html";
-        return false;
-    }
-
-    const { data, error } = await client
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-    if (error || !data || data.role !== "admin") {
-        document.body.innerHTML = "❌ Admin access only";
-        return false;
-    }
-
-    return true;
-}
 
 // ✅ ✅ LOAD STATS (FIXED)
 async function loadStats() {
