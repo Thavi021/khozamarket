@@ -1,50 +1,153 @@
 <!DOCTYPE html>
 <html>
-<head><title>Sell</title></head>
-<body style="background:#0f172a;color:white">
-
-<h1>Sell Item</h1>
-
-<input id="name" placeholder="Name"><br><br>
-<input id="price" placeholder="Price"><br><br>
-<textarea id="desc"></textarea><br><br>
-
-<button onclick="post()">Post</button>
+<head>
+<meta charset="UTF-8">
+<title>Sell Product</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<style>
+body {
+    font-family: 'Segoe UI';
+    background: #0f172a;
+    color: white;
+    padding: 40px;
+}
+
+.container {
+    max-width: 500px;
+    margin: auto;
+}
+
+.card {
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 12px;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: none;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #facc15;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #eab308;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="card">
+
+        <h2>Sell a Product</h2>
+
+        <input id="name" placeholder="Product Name">
+
+        <input id="price" type="number" placeholder="Price">
+
+        <textarea id="description" placeholder="Description"></textarea>
+
+        <select id="seller">
+            <option value="">Select Seller</option>
+        </select>
+
+        <button onclick="submitProduct()">Submit Product</button>
+
+        <p id="msg"></p>
+
+    </div>
+</div>
+
 <script>
-const supabase = supabase.createClient(
-"https://lyvtjcnzeihsqvpzkced.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM"
+
+// ✅ Supabase
+const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+
+const client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
 );
 
-async function post(){
+// ✅ LOAD SELLERS INTO DROPDOWN
+async function loadSellers() {
 
-const {data:{user}}=await supabase.auth.getUser();
+    const { data, error } = await client
+        .from('profiles')
+        .select('*');
 
-if(!user){
-alert("Login first");
-return;
+    console.log("SELLERS:", data);
+
+    const select = document.getElementById("seller");
+
+    data.forEach(user => {
+        select.innerHTML += `
+            <option value="${user.id}|${user.email}">
+                ${user.email} (${user.role})
+            </option>
+        `;
+    });
 }
 
-const {data:profile}=await supabase
-.from('profiles')
-.select('*')
-.eq('id',user.id)
-.single();
+// ✅ SUBMIT PRODUCT
+async function submitProduct() {
 
-await supabase.from('products').insert([{
-name:document.getElementById("name").value,
-price:document.getElementById("price").value,
-description:document.getElementById("desc").value,
-seller_id:user.id,
-seller_name:profile.full_name
-}]);
+    const name = document.getElementById("name").value;
+    const price = document.getElementById("price").value;
+    const description = document.getElementById("description").value;
+    const sellerValue = document.getElementById("seller").value;
 
-alert("Submitted for approval");
+    if (!name || !price || !sellerValue) {
+        alert("Please fill all fields");
+        return;
+    }
 
+    const [seller_id, seller_email] = sellerValue.split("|");
+
+    const { error } = await client
+        .from('products')
+        .insert([{
+            name: name,
+            price: Number(price),
+            description: description,
+            seller_id: seller_id,
+            seller_name: seller_email,
+            status: "pending"
+        }]);
+
+    if (error) {
+        console.error(error);
+        document.getElementById("msg").innerText = "❌ Error saving product";
+        return;
+    }
+
+    document.getElementById("msg").innerText = "✅ Product submitted (pending approval)";
+
+    // ✅ clear form
+    document.getElementById("name").value = "";
+    document.getElementById("price").value = "";
+    document.getElementById("description").value = "";
+    document.getElementById("seller").value = "";
 }
+
+// ✅ INIT
+loadSellers();
+
 </script>
 
 </body>
