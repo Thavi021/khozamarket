@@ -178,19 +178,21 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 async function loadProducts() {
     const { data, error } = await supabaseClient
         .from('products')
-        .select('*')
-        .eq('status', 'approved');
+        .select('*');
 
-    if (error) {
-        console.error("Error:", error);
-        return;
-    }
+    console.log("DATA:", data);
+    console.log("ERROR:", error);
 
     const container = document.getElementById('products-container');
     container.innerHTML = '';
 
-    if (data.length === 0) {
-        container.innerHTML = "<p>No products available</p>";
+    if (error) {
+        container.innerHTML = "<p>Error loading products</p>";
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        container.innerHTML = "<p>No products found in database</p>";
         return;
     }
 
@@ -202,7 +204,6 @@ async function loadProducts() {
             <h3>${product.name}</h3>
             <p class="price">R${product.price}</p>
             <p class="seller">Seller: ${product.seller_name}</p>
-            <button onclick="viewProduct(${product.id})">View</button>
         `;
 
         container.appendChild(card);
