@@ -199,6 +199,17 @@ function viewProduct(id) {
 }
 
 loadProducts();
+
+    async function requireLogin() {
+    const { data: { user } } = await client.auth.getUser();
+
+    if (!user) {
+        window.location.href = "login.html";
+        return false;
+    }
+
+    return true;
+}
 </script>
 
 </body>
