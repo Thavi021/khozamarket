@@ -65,16 +65,11 @@ const client = window.supabase.createClient(
     SUPABASE_KEY
 );
 
-// ✅ LOAD PRODUCT (FIXED)
+// ✅ LOAD PRODUCT
 async function loadProduct() {
 
     const params = new URLSearchParams(window.location.search);
-    let id = params.get("id");
-
-    console.log("Raw ID:", id);
-
-    // ✅ Convert safely
-    id = parseInt(id);
+    let id = parseInt(params.get("id"));
 
     if (!id) {
         document.getElementById("product").innerHTML = "Invalid product ID";
@@ -86,9 +81,6 @@ async function loadProduct() {
         .select('*')
         .eq('id', id);
 
-    console.log("DATA:", data);
-    console.log("ERROR:", error);
-
     const container = document.getElementById("product");
 
     if (error || !data || data.length === 0) {
@@ -96,7 +88,7 @@ async function loadProduct() {
         return;
     }
 
-    const p = data[0]; // ✅ get first result safely
+    const p = data[0];
 
     container.innerHTML = `
         <div class="card">
@@ -116,7 +108,7 @@ async function loadProduct() {
     `;
 }
 
-// ✅ ADD TO CART (FIXED + REDIRECT)
+// ✅ ✅ FIXED ADD TO CART + REDIRECT TO CART PAGE
 function addToCart(id, name, price) {
 
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -124,8 +116,8 @@ function addToCart(id, name, price) {
     const existingItem = cart.find(item => item.id === id);
 
     if (existingItem) {
-        alert("✅ Already in cart");
-        setTimeout(() => window.location.replace("index.html"), 300);
+        // ✅ Already exists → just go to cart
+        window.location.href = "cart.html";
         return;
     }
 
@@ -135,14 +127,11 @@ function addToCart(id, name, price) {
 
     console.log("UPDATED CART:", cart);
 
-    alert("✅ Added to cart!");
-
-    setTimeout(() => {
-        window.location.replace("index.html");
-    }, 300);
+    // ✅ INSTANT REDIRECT TO CART
+    window.location.href = "cart.html";
 }
 
-// ✅ BUY NOW
+// ✅ BUY NOW (future)
 function buyNow(id) {
     alert("🚀 Checkout coming next");
 }
