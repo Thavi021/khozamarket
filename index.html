@@ -1,61 +1,59 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Products</title>
+  <title>Test Supabase</title>
 
-  <!-- ✅ Supabase CDN -->
+  <!-- ✅ CORRECT SCRIPT (IMPORTANT) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
 
-<h1>Products</h1>
+<h1>Products Test</h1>
 
-<div id="products"></div>
+<div id="products">Loading...</div>
 
 <script>
-  // ✅ Your Supabase details
   const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co/rest/v1/";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
 
-  const supabase = window.supabase.createClient(
+  const client = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
   );
 
-  // ✅ Load products
-  async function loadProducts() {
-    const { data, error } = await supabase
+  async function test() {
+    console.log("Running test...");
+
+    const { data, error } = await client
       .from('products')
       .select('*');
 
     console.log("DATA:", data);
     console.log("ERROR:", error);
 
-    const container = document.getElementById('products');
+    const div = document.getElementById("products");
 
     if (error) {
-      container.innerHTML = "Error loading products";
+      div.innerHTML = "ERROR: " + error.message;
       return;
     }
 
     if (!data || data.length === 0) {
-      container.innerHTML = "No products found";
+      div.innerHTML = "✅ Connected BUT no products found";
       return;
     }
 
+    div.innerHTML = "";
+
     data.forEach(p => {
-      const div = document.createElement('div');
-      div.innerHTML = `
-        <h3>${p.name}</h3>
-        <p>Price: R${p.price}</p>
-        <p>Seller: ${p.seller_name}</p>
-        <hr>
+      div.innerHTML += `
+        <p>${p.name} - R${p.price}</p>
       `;
-      container.appendChild(div);
     });
   }
 
-  loadProducts();
+  test();
 </script>
 
 </body>
