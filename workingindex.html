@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Supabase</title>
+
+  <!-- ✅ CORRECT SCRIPT (IMPORTANT) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+<h1>Products Test</h1>
+
+<div id="products">Loading...</div>
+
+<script>
+  const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+
+  const client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  async function test() {
+    console.log("Running test...");
+
+    const { data, error } = await client
+      .from('products')
+      .select('*');
+
+    console.log("DATA:", data);
+    console.log("ERROR:", error);
+
+    const div = document.getElementById("products");
+
+    if (error) {
+      div.innerHTML = "ERROR: " + error.message;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      div.innerHTML = "✅ Connected BUT no products found";
+      return;
+    }
+
+    div.innerHTML = "";
+
+    data.forEach(p => {
+      div.innerHTML += `
+        <p>${p.name} - R${p.price}</p>
+      `;
+    });
+  }
+
+  test();
+</script>
+
+</body>
+</html>
