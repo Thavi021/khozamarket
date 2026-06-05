@@ -150,16 +150,20 @@ function removeItem(index) {
 // ✅ CHECKOUT (NO LOGIN REQUIRED)
 async function checkout() {
 
-    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
 
     if (cart.length === 0) {
         alert("Cart is empty");
         return;
     }
 
-    const total = cart.reduce((sum, item) => sum + item.price, 0);
+    // ✅ Calculate total
+    const total = cart.reduce((sum, item) => sum + Number(item.price), 0);
 
-    // ✅ CREATE ORDER
+    console.log("CHECKOUT CART:", cart);
+    console.log("TOTAL:", total);
+
+    // ✅ STEP 1: Create order
     const { data: order, error: orderError } = await client
         .from('orders')
         .insert([{
@@ -170,12 +174,14 @@ async function checkout() {
         .single();
 
     if (orderError) {
-        console.error(orderError);
-        alert("❌ Error creating order");
+        console.error("ORDER ERROR:", orderError);
+        alert("❌ Failed to create order: " + orderError.message);
         return;
     }
 
-    // ✅ INSERT ITEMS
+    console.log("ORDER CREATED:", order);
+
+    // ✅ STEP 2: Insert order items
     const items = cart.map(item => ({
         order_id: order.id,
         product_id: item.id,
@@ -188,19 +194,21 @@ async function checkout() {
         .insert(items);
 
     if (itemsError) {
-        console.error(itemsError);
-        alert("❌ Error saving items");
+        console.error("ITEM ERROR:", itemsError);
+        alert("❌ Failed to save items: " + itemsError.message);
         return;
     }
 
-    // ✅ CLEAR CART
+    console.log("ITEMS SAVED");
+
+    // ✅ STEP 3: Clear cart
     localStorage.removeItem("cart");
 
     alert("✅ Order placed successfully!");
 
+    // ✅ STEP 4: Redirect
     window.location.href = "index.html";
 }
-
 // ✅ BACK TO SHOP
 function goBack() {
     window.location.href = "index.html";
