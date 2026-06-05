@@ -1,1 +1,147 @@
-gf
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Product Details</title>
+
+<!-- ✅ FIXED SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #0f172a;
+    color: #f1f5f9;
+    padding: 40px;
+}
+
+.container {
+    max-width: 600px;
+    margin: auto;
+}
+
+.card {
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 15px;
+}
+
+h1 { margin-bottom: 10px; }
+
+.price {
+    color: #facc15;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.desc {
+    margin-bottom: 15px;
+    color: #94a3b8;
+}
+
+button {
+    padding: 10px;
+    width: 100%;
+    margin-top: 10px;
+    background: #facc15;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #eab308;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <div id="product">Loading...</div>
+</div>
+
+<script>
+// ✅ YOUR WORKING CONNECTION
+const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+
+const client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+// ✅ LOAD PRODUCT
+async function loadProduct() {
+
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    console.log("Product ID:", id);
+
+    if (!id) {
+        document.getElementById("product").innerHTML = "No product ID in URL";
+        return;
+    }
+
+    const { data, error } = await client
+        .from('products')
+        .select('*')
+        .eq('id', Number(id))   // ✅ FIXED (important)
+        .single();
+
+    console.log("DATA:", data);
+    console.log("ERROR:", error);
+
+    const container = document.getElementById("product");
+
+    if (error || !data) {
+        container.innerHTML = "<p>❌ Product not found</p>";
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="card">
+            <h1>${data.name}</h1>
+            <p class="price">R${data.price}</p>
+            <p class="desc">${data.description || "No description available"}</p>
+            <p>Seller: ${data.seller_name}</p>
+
+            <button onclick="addToCart(${data.id}, '${data.name}', ${data.price})">
+                Add to Cart
+            </button>
+
+            <button onclick="buyNow(${data.id})">
+                Buy Now
+            </button>
+        </div>
+    `;
+}
+
+// ✅ ADD TO CART (LOCAL STORAGE SIMPLE VERSION)
+function addToCart(id, name, price) {
+
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    cart.push({
+        id: id,
+        name: name,
+        price: price
+    });
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+    alert("✅ Added to cart");
+}
+
+// ✅ BUY NOW (placeholder)
+function buyNow(id) {
+    alert("🚀 Checkout coming next");
+}
+
+loadProduct();
+</script>
+
+</body>
+</html>
