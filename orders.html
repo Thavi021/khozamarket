@@ -92,13 +92,14 @@ async function loadOrders() {
         .select('*')
         .order('created_at', { ascending: false });
 
-    console.log("ORDERS:", orders);
+    console.log("ORDERS:", orders, error);
 
     const container = document.getElementById("orders");
     container.innerHTML = "";
 
     if (error) {
-        container.innerHTML = "❌ Error loading orders";
+        console.error("ORDER ERROR:", error);
+        container.innerHTML = "❌ " + error.message;
         return;
     }
 
@@ -109,38 +110,41 @@ async function loadOrders() {
 
     for (let order of orders) {
 
-        // ✅ Load items for each order
-        const { data: items } = await client
+        let itemsHTML = "Loading items...";
+
+        // ✅ Safe items fetch (won't break page)
+        const { data: items, error: itemError } = await client
             .from('order_items')
             .select('*')
             .eq('order_id', order.id);
 
-        const div = document.createElement("div");
-        div.className = "card";
+        console.log("ITEMS:", items, itemError);
 
-        let itemsHTML = "";
-
-        if (items && items.length > 0) {
+        if (!itemError && items && items.length > 0) {
+            itemsHTML = "";
             items.forEach(i => {
                 itemsHTML += `<li>${i.name} - R${i.price}</li>`;
             });
+        } else {
+            itemsHTML = "<li>No items found</li>";
         }
+
+        const div = document.createElement("div");
+        div.className = "card";
 
         div.innerHTML = `
             <h3>Order #${order.id}</h3>
             <p>Total: R${order.total}</p>
 
-            <p class="status ${order.status}">
-                Status: ${order.status}
-            </p>
+            <p>Status: ${order.status}</p>
 
-            <ul class="items">
+            <ul>
                 ${itemsHTML}
             </ul>
 
             ${
                 order.status === "pending"
-                ? `<button onclick="completeOrder(${order.id})">Mark as Completed</button>`
+                ? `<button onclick="completeOrder(${order.id})">Mark Completed</button>`
                 : ""
             }
         `;
