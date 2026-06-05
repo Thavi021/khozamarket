@@ -1,37 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head><title>Login</title></head>
-<body style="background:#0f172a;color:white;font-family:Segoe UI">
-
-<h1>Login</h1>
-
-<input id="email" placeholder="Email"><br><br>
-<input id="password" type="password" placeholder="Password"><br><br>
-
+<input id="email" placeholder="Enter email">
 <button onclick="login()">Login</button>
-<p id="msg"></p>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const supabase = supabase.createClient(
-"https://lyvtjcnzeihsqvpzkced.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM"
-);
+async function login() {
+    const email = document.getElementById("email").value;
 
-async function login(){
-const email=document.getElementById("email").value;
-const password=document.getElementById("password").value;
+    const { error } = await client.auth.signInWithOtp({
+        email: email
+    });
 
-const {error}=await supabase.auth.signInWithPassword({email,password});
-
-if(error){
-    document.getElementById("msg").innerText=error.message;
-}else{
-    location.href="index.html";
-}
+    if (error) {
+        alert(error.message);
+    } else {
+        alert("Check your email to login");
+    }
 }
 </script>
-
-</body>
-</html>
