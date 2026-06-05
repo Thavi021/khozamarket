@@ -1,23 +1,119 @@
 <!DOCTYPE html>
-<html>
-<body style="background:#0f172a;color:white">
-
-<h1>Products</h1>
-<div id="list"></div>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Product Details</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script>
-const supabase = supabase.createClient(
-"https://lyvtjcnzeihsqvpzkced.supabase.co/rest/v1/",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM"
-);
-
-async function load(){
-const {data}=await supabase.from('products').select('*').eq('status','approved');
-document.getElementById("list").innerHTML=JSON.stringify(data,null,2);
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #0f172a;
+    color: #f1f5f9;
+    padding: 40px;
 }
-load();
+
+.container {
+    max-width: 600px;
+    margin: auto;
+}
+
+.card {
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 15px;
+}
+
+h1 {
+    margin-bottom: 10px;
+}
+
+.price {
+    color: #facc15;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.desc {
+    margin-bottom: 15px;
+    color: #94a3b8;
+}
+
+button {
+    padding: 10px;
+    width: 100%;
+    background: #facc15;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #eab308;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <div id="product">Loading...</div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+
+const client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+</script>
+
+<!-- ✅ LOAD SINGLE PRODUCT -->
+<script>
+async function loadProduct() {
+
+    // ✅ get id from URL
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    console.log("Product ID:", id);
+
+    const { data, error } = await client
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    console.log("DATA:", data);
+
+    const container = document.getElementById("product");
+
+    if (error || !data) {
+        container.innerHTML = "<p>Product not found</p>";
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="card">
+            <h1>${data.name}</h1>
+            <p class="price">R${data.price}</p>
+            <p class="desc">${data.description || "No description available"}</p>
+            <p>Seller: ${data.seller_name}</p>
+
+            <button onclick="buyNow(${data.id})">Buy Now</button>
+        </div>
+    `;
+}
+
+function buyNow(id) {
+    alert("Checkout coming next 🚀");
+}
+
+loadProduct();
 </script>
 
 </body>
