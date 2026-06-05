@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Product Details</title>
 
-<!-- ✅ Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -25,8 +24,6 @@ body {
     padding: 25px;
     border-radius: 15px;
 }
-
-h1 { margin-bottom: 10px; }
 
 .price {
     color: #facc15;
@@ -49,10 +46,6 @@ button {
     cursor: pointer;
     font-weight: bold;
 }
-
-button:hover {
-    background: #eab308;
-}
 </style>
 </head>
 
@@ -63,7 +56,7 @@ button:hover {
 </div>
 
 <script>
-// ✅ Supabase connection
+// ✅ Supabase
 const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
 const SUPABASE_KEY = "YOUR_KEY_HERE";
 
@@ -72,72 +65,71 @@ const client = window.supabase.createClient(
     SUPABASE_KEY
 );
 
-// ✅ LOAD PRODUCT
+// ✅ LOAD PRODUCT (FIXED)
 async function loadProduct() {
 
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
+    let id = params.get("id");
 
-    console.log("Product ID:", id);
+    console.log("Raw ID:", id);
+
+    // ✅ Convert safely
+    id = parseInt(id);
 
     if (!id) {
-        document.getElementById("product").innerHTML = "No product ID in URL";
+        document.getElementById("product").innerHTML = "Invalid product ID";
         return;
     }
 
     const { data, error } = await client
         .from('products')
         .select('*')
-        .eq('id', Number(id))
-        .single();
+        .eq('id', id);
 
     console.log("DATA:", data);
     console.log("ERROR:", error);
 
     const container = document.getElementById("product");
 
-    if (error || !data) {
+    if (error || !data || data.length === 0) {
         container.innerHTML = "<p>❌ Product not found</p>";
         return;
     }
 
+    const p = data[0]; // ✅ get first result safely
+
     container.innerHTML = `
         <div class="card">
-            <h1>${data.name}</h1>
-            <p class="price">R${data.price}</p>
-            <p class="desc">${data.description || "No description available"}</p>
-            <p>Seller: ${data.seller_name}</p>
+            <h1>${p.name}</h1>
+            <p class="price">R${p.price}</p>
+            <p class="desc">${p.description || "No description available"}</p>
+            <p>Seller: ${p.seller_name}</p>
 
-            <button onclick='addToCart(${data.id}, ${JSON.stringify(data.name)}, ${data.price})'>
+            <button onclick='addToCart(${p.id}, ${JSON.stringify(p.name)}, ${p.price})'>
                 Add to Cart
             </button>
 
-            <button onclick="buyNow(${data.id})">
+            <button onclick="buyNow(${p.id})">
                 Buy Now
             </button>
         </div>
     `;
 }
 
-// ✅ ADD TO CART + REDIRECT
+// ✅ ADD TO CART (FIXED + REDIRECT)
 function addToCart(id, name, price) {
 
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-    // ✅ Prevent duplicates
     const existingItem = cart.find(item => item.id === id);
 
     if (existingItem) {
         alert("✅ Already in cart");
-        window.location.href = "index.html"; // redirect anyway
+        setTimeout(() => window.location.replace("index.html"), 300);
         return;
     }
 
-    cart.push({
-        id: id,
-        name: name,
-        price: price
-    });
+    cart.push({ id, name, price });
 
     localStorage.setItem("cart", JSON.stringify(cart));
 
@@ -145,11 +137,12 @@ function addToCart(id, name, price) {
 
     alert("✅ Added to cart!");
 
-    // ✅ REDIRECT TO HOME
-    window.location.href = "index.html";
+    setTimeout(() => {
+        window.location.replace("index.html");
+    }, 300);
 }
 
-// ✅ BUY NOW (optional)
+// ✅ BUY NOW
 function buyNow(id) {
     alert("🚀 Checkout coming next");
 }
