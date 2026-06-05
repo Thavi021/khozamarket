@@ -36,6 +36,13 @@ button {
     background: #facc15;
     border: none;
     cursor: pointer;
+    font-weight: bold;
+}
+
+.note {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 10px;
 }
 </style>
 </head>
@@ -44,13 +51,24 @@ button {
 
 <div class="card">
     <h2>Login</h2>
-    <input id="email" placeholder="Enter email">
+
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+
     <button onclick="login()">Login</button>
 
     <p id="msg"></p>
+
+    <div class="note">
+        <p><strong>Test Accounts:</strong></p>
+        <p>Admin: sByrneAdmin@gmail.com / bestLecturer4eva!</p>
+        <p>User: sByrne@gmail.com / bestLecturer4always!</p>
+    </div>
 </div>
 
 <script>
+
+// ✅ Supabase
 const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
 
@@ -59,36 +77,39 @@ const client = window.supabase.createClient(
     SUPABASE_KEY
 );
 
-// ✅ LOGIN
+// ✅ LOGIN FUNCTION
 async function login() {
 
     const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-    const { error } = await client.auth.signInWithOtp({
-        email: email,
-        options: {
-            emailRedirectTo: window.location.origin + "/index.html"
-        }
-    });
-
-    if (error) {
-        document.getElementById("msg").innerText = error.message;
-    } else {
-        document.getElementById("msg").innerText =
-        "✅ Check your email to login!";
+    if (!email || !password) {
+        alert("Enter email and password");
+        return;
     }
-}
 
-// ✅ AUTO REDIRECT IF ALREADY LOGGED IN
-async function checkSession() {
-    const { data: { session } } = await client.auth.getSession();
+    const { data, error } = await client
+        .from('app_users')
+        .select('*')
+        .eq('email', email)
+        .eq('password', password)
+        .single();
 
-    if (session) {
+    console.log("LOGIN RESULT:", data, error);
+
+    if (error || !data) {
+        document.getElementById("msg").innerText = "❌ Invalid login";
+        return;
+    }
+
+    // ✅ Redirect based on role
+    if (data.role === "admin") {
+        window.location.href = "admin.html";
+    } else {
         window.location.href = "index.html";
     }
 }
 
-checkSession();
 </script>
 
 </body>
