@@ -1,5 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cart | khozamarket</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #0f172a;
+    color: #f1f5f9;
+    padding: 40px;
+}
+
+.container {
+    max-width: 700px;
+    margin: auto;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+.cart-item {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.price {
+    color: #facc15;
+    font-weight: bold;
+}
+
+button {
+    margin-top: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #facc15;
+    color: #020617;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #eab308;
+}
+
+.total {
+    font-size: 20px;
+    margin-top: 20px;
+}
+
+.empty {
+    color: #94a3b8;
+}
+
+.checkout-btn {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.back-btn {
+    width: 100%;
+    margin-top: 10px;
+    background: #334155;
+    color: white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Your Cart</h1>
+
+    <div id="cart-items"></div>
+
+    <div id="total"></div>
+
+    <button class="checkout-btn" onclick="checkout()">
+        Checkout
+    </button>
+
+    <button class="back-btn" onclick="goBack()">
+        Continue Shopping
+    </button>
+</div>
+
 <script>
-// ✅ Supabase connection
+
+// ✅ Supabase
 const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
 
@@ -10,6 +104,7 @@ const client = window.supabase.createClient(
 
 // ✅ LOAD CART
 function loadCart() {
+
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
     const container = document.getElementById("cart-items");
@@ -42,6 +137,7 @@ function loadCart() {
 
 // ✅ REMOVE ITEM
 function removeItem(index) {
+
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
     cart.splice(index, 1);
@@ -51,32 +147,22 @@ function removeItem(index) {
     loadCart();
 }
 
-// ✅ ✅ CHECKOUT (CONNECTED TO DATABASE)
+// ✅ CHECKOUT (NO LOGIN REQUIRED)
 async function checkout() {
 
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
     if (cart.length === 0) {
-        alert("Your cart is empty");
+        alert("Cart is empty");
         return;
     }
 
-    // ✅ Step 1: get logged-in user
-    const { data: { user } } = await client.auth.getUser();
+    const total = cart.reduce((sum, item) => sum + item.price, 0);
 
-    if (!user) {
-        alert("Please login first");
-        return;
-    }
-
-    // ✅ Step 2: calculate total
-    let total = cart.reduce((sum, item) => sum + item.price, 0);
-
-    // ✅ Step 3: create order
+    // ✅ CREATE ORDER
     const { data: order, error: orderError } = await client
         .from('orders')
         .insert([{
-            user_id: user.id,
             total: total,
             status: "pending"
         }])
@@ -85,11 +171,11 @@ async function checkout() {
 
     if (orderError) {
         console.error(orderError);
-        alert("Error creating order");
+        alert("❌ Error creating order");
         return;
     }
 
-    // ✅ Step 4: insert order items
+    // ✅ INSERT ITEMS
     const items = cart.map(item => ({
         order_id: order.id,
         product_id: item.id,
@@ -103,18 +189,27 @@ async function checkout() {
 
     if (itemsError) {
         console.error(itemsError);
-        alert("Error saving items");
+        alert("❌ Error saving items");
         return;
     }
 
-    // ✅ Step 5: clear cart
+    // ✅ CLEAR CART
     localStorage.removeItem("cart");
 
     alert("✅ Order placed successfully!");
 
-    // ✅ reload UI
-    loadCart();
+    window.location.href = "index.html";
 }
 
+// ✅ BACK TO SHOP
+function goBack() {
+    window.location.href = "index.html";
+}
+
+// ✅ INIT
 loadCart();
+
 </script>
+
+</body>
+</html>
