@@ -1,89 +1,174 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <title>Order Monitoring</title>
 
 <style>
-body{background:#0f172a;color:white;font-family:'Segoe UI';padding:40px;}
-h1{color:#facc15;}
+body{font-family:'Segoe UI';background:#0f172a;color:#fff;margin:0;}
 
-table{width:100%;border-collapse:collapse;}
-th,td{padding:10px;border-bottom:1px solid #333;}
-th{color:#facc15;}
+header{
+    background:#020617;
+    padding:15px 40px;
+    color:#facc15;
+}
+
+.container{padding:40px;}
+
+.card{
+    background:#1e293b;
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:20px;
+}
+
+.status{
+    margin-top:10px;
+    font-size:14px;
+}
+
+.status.completed{ color:#22c55e; }
+.status.pending{ color:#facc15; }
+
+.items{
+    margin-top:10px;
+    padding-left:10px;
+}
+
+button{
+    padding:6px 10px;
+    margin-top:10px;
+    border:none;
+    border-radius:6px;
+    background:#facc15;
+    cursor:pointer;
+}
+
+.back-btn{
+    margin-top:30px;
+    background:#334155;
+    color:white;
+    width:100%;
+}
 </style>
 
 </head>
 <body>
 
-<h1>Order Monitoring</h1>
+<header>
+<h2>Order Monitoring</h2>
+</header>
 
-<table>
-<thead>
-<tr>
-<th>Order ID</th>
-<th>Buyer</th>
-<th>Products</th>
-<th>Total</th>
-<th>Status</th>
-</tr>
-</thead>
+<div class="container">
 
-<tbody id="ordersTable"></tbody>
-</table>
+<h1>All Orders</h1>
 
-<br>
-<a href="admin.html"><button>Back</button></a>
+<div id="orders">Loading...</div>
 
-<!-- ✅ SUPABASE -->
-https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js
+<a href="admin.html">
+<button class="back-btn">⬅ Back to Dashboard</button>
+</a>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
-// ✅ CONFIG
-const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co/rest/v1/";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+// ✅ Supabase
+const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
+const SUPABASE_KEY = "YeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
 
 // ✅ LOAD ORDERS
 async function loadOrders() {
-    console.log("Loading orders...");
 
-    const { data: orders, error } = await supabaseClient
+    const { data: orders, error } = await client
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false });
 
+    console.log("ORDERS:", orders);
+
+    const container = document.getElementById("orders");
+    container.innerHTML = "";
+
     if (error) {
-        console.error(error);
+        container.innerHTML = "❌ Error loading orders";
         return;
     }
 
-    const table = document.getElementById("ordersTable");
-    table.innerHTML = "";
+    if (!orders || orders.length === 0) {
+        container.innerHTML = "No orders found";
+        return;
+    }
 
     for (let order of orders) {
 
-        // ✅ get order items
-        const { data: items } = await supabaseClient
+        // ✅ Load items for each order
+        const { data: items } = await client
             .from('order_items')
             .select('*')
             .eq('order_id', order.id);
 
-        const productNames = items.map(i => i.name).join(", ");
+        const div = document.createElement("div");
+        div.className = "card";
 
-        const row = document.createElement("tr");
+        let itemsHTML = "";
 
-        row.innerHTML = `
-            <td>${order.id}</td>
-            <td>${order.user_id}</td>
-            <td>${productNames}</td>
-            <td>R${order.total}</td>
-            <td>${order.status}</td>
+        if (items && items.length > 0) {
+            items.forEach(i => {
+                itemsHTML += `<li>${i.name} - R${i.price}</li>`;
+            });
+        }
+
+        div.innerHTML = `
+            <h3>Order #${order.id}</h3>
+            <p>Total: R${order.total}</p>
+
+            <p class="status ${order.status}">
+                Status: ${order.status}
+            </p>
+
+            <ul class="items">
+                ${itemsHTML}
+            </ul>
+
+            ${
+                order.status === "pending"
+                ? `<button onclick="completeOrder(${order.id})">Mark as Completed</button>`
+                : ""
+            }
         `;
 
-        table.appendChild(row);
+        container.appendChild(div);
     }
+}
+
+// ✅ MARK AS COMPLETED
+async function completeOrder(id) {
+
+    const confirmAction = confirm("Mark this order as completed?");
+    if (!confirmAction) return;
+
+    const { error } = await client
+        .from('orders')
+        .update({ status: "completed" })
+        .eq('id', id);
+
+    if (error) {
+        console.error(error);
+        alert("❌ Error updating order");
+        return;
+    }
+
+    alert("✅ Order completed");
+
+    loadOrders();
 }
 
 // ✅ INIT
@@ -93,4 +178,3 @@ loadOrders();
 
 </body>
 </html>
-``
