@@ -1,84 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Your Cart</title>
-
-<style>
-body {
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    background: #0f172a;
-    color: #f1f5f9;
-    padding: 40px;
-}
-
-h1 {
-    margin-bottom: 20px;
-}
-
-.container {
-    max-width: 700px;
-    margin: auto;
-}
-
-.cart-item {
-    background: #1e293b;
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 15px;
-}
-
-.price {
-    color: #facc15;
-    font-weight: bold;
-}
-
-button {
-    margin-top: 10px;
-    padding: 10px;
-    border: none;
-    border-radius: 8px;
-    background: #facc15;
-    color: #020617;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-button:hover {
-    background: #eab308;
-}
-
-.total {
-    font-size: 20px;
-    margin-top: 20px;
-}
-
-.empty {
-    color: #94a3b8;
-}
-
-.checkout-btn {
-    width: 100%;
-    margin-top: 20px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="container">
-    <h1>Your Cart</h1>
-
-    <div id="cart-items"></div>
-
-    <div id="total"></div>
-
-    <button class="checkout-btn" onclick="checkout()">
-        Checkout
-    </button>
-</div>
-
 <script>
+// ✅ Supabase connection
+const SUPABASE_URL = "https://lyvtjcnzeihsqvpzkced.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnRqY256ZWloc3F2cHprY2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NjAxODAsImV4cCI6MjA5NjEzNjE4MH0.YcMI_AKjUczeecLQcNq6OyPcfxOe7Z21hvacVW6qTfM";
+
+const client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+// ✅ LOAD CART
 function loadCart() {
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
@@ -110,6 +40,7 @@ function loadCart() {
     totalDiv.innerHTML = `<p class="total">Total: R${total}</p>`;
 }
 
+// ✅ REMOVE ITEM
 function removeItem(index) {
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
@@ -120,7 +51,9 @@ function removeItem(index) {
     loadCart();
 }
 
-function checkout() {
+// ✅ ✅ CHECKOUT (CONNECTED TO DATABASE)
+async function checkout() {
+
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
     if (cart.length === 0) {
@@ -128,13 +61,60 @@ function checkout() {
         return;
     }
 
-    alert("🚀 Next step: connect to orders table");
+    // ✅ Step 1: get logged-in user
+    const { data: { user } } = await client.auth.getUser();
 
-    // 🔥 Future: send to Supabase orders table
+    if (!user) {
+        alert("Please login first");
+        return;
+    }
+
+    // ✅ Step 2: calculate total
+    let total = cart.reduce((sum, item) => sum + item.price, 0);
+
+    // ✅ Step 3: create order
+    const { data: order, error: orderError } = await client
+        .from('orders')
+        .insert([{
+            user_id: user.id,
+            total: total,
+            status: "pending"
+        }])
+        .select()
+        .single();
+
+    if (orderError) {
+        console.error(orderError);
+        alert("Error creating order");
+        return;
+    }
+
+    // ✅ Step 4: insert order items
+    const items = cart.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        name: item.name,
+        price: item.price
+    }));
+
+    const { error: itemsError } = await client
+        .from('order_items')
+        .insert(items);
+
+    if (itemsError) {
+        console.error(itemsError);
+        alert("Error saving items");
+        return;
+    }
+
+    // ✅ Step 5: clear cart
+    localStorage.removeItem("cart");
+
+    alert("✅ Order placed successfully!");
+
+    // ✅ reload UI
+    loadCart();
 }
 
 loadCart();
 </script>
-
-</body>
-</html>
